@@ -86,7 +86,7 @@ export default {
   //   "json",
   //   "node"
   // ],
-
+  moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
   // moduleNameMapper: {},
 
@@ -100,7 +100,7 @@ export default {
   // notifyMode: "failure-change",
 
   // A preset that is used as a base for Jest's configuration
-  // preset: undefined,
+  preset: "ts-jest",
 
   // Run tests from one or more projects
   // projects: undefined,
@@ -145,7 +145,7 @@ export default {
 
   // The test environment that will be used for testing
   // testEnvironment: "jest-environment-node",
-
+  testEnvironment: "node",
   // Options that will be passed to the testEnvironment
   // testEnvironmentOptions: {},
 
@@ -165,7 +165,7 @@ export default {
 
   // The regexp pattern or array of patterns that Jest uses to detect test files
   // testRegex: [],
-
+  testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$",
   // This option allows the use of a custom results processor
   // testResultsProcessor: undefined,
 
@@ -174,13 +174,15 @@ export default {
 
   // A map from regular expressions to paths to transformers
   // transform: undefined,
-
+  transform: {
+    "^.+\\.ts?$": "ts-jest",
+  },
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
   // transformIgnorePatterns: [
   //   "\\\\node_modules\\\\",
   //   "\\.pnp\\.[^\\\\]+$"
   // ],
-
+  transformIgnorePatterns: ["<rootDir>/node_modules/"],
   // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them
   // unmockedModulePathPatterns: undefined,
 
