@@ -12,42 +12,31 @@ interface AuthenticatedRequest extends Request {
 // get the public key
 //http://localhost:8080/auth/realms/MyRealm/protocol/openid-connect/certs
 // Function to get the JWT secret from Keycloak
-export async function getJWTSecret() {
-  const clientId = process.env.KEYCLOAK_CLIENT_ID;
-  const clientSecret = process.env.KEYCLOAK_CLIENT_SECRET;
-  const realm = process.env.KEYCLOAK_REALM;
-  const keycloakServer = process.env.KEYCLOAK_SERVER;
-  const tokenUrl = `${keycloakServer}/auth/realms/${realm}/protocol/openid-connect/certs`;
-
-  const data = qs.stringify({
-    client_id: clientId,
-    client_secret: clientSecret,
-    grant_type: "client_credentials",
-  });
-
-  const config = {
-    method: "get",
-    url: tokenUrl,
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    data: data,
-  };
+export async function getPublicKey() {
+  const realm = process.env.KEYCLOAK_REALM!;
+  const keycloakServer = process.env.KEYCLOAK_SERVER!;
+  const wellKnownUrl = `${keycloakServer}/auth/realms/${realm}/.well-known/openid-configuration`;
 
   try {
-    const response = await axios.request(config);
-    const { access_token } = response.data;
+    const response = await axios.get(wellKnownUrl);
+    const jwksUri = response.data.jwks_uri;
 
-    // Decode the token to get the public key
-    const decodedToken = jsonwebtoken.decode(access_token, { complete: true });
-    if (decodedToken && typeof decodedToken === "object") {
-      process.env.JSON_WEB_TOKEN_SECRET = decodedToken.header.kid;
+    // Fetch JWKS and find the correct key
+    const jwksResponse = await axios.get(jwksUri);
+    const jwks = jwksResponse.data;
+
+    // Extract the first key for simplicity, assuming it's the correct one
+    if (jwks.keys && jwks.keys.length) {
+      const key = jwks.keys[0];
+      const cert = key.x5c[0];
+      const pem = `-----BEGIN CERTIFICATE-----\n${cert}\n-----END CERTIFICATE-----`;
+      return pem;
     } else {
-      throw new Error("Unable to decode token");
+      throw new Error("No JWKS keys found");
     }
   } catch (error) {
-    console.error("Error fetching JWT secret from Keycloak:", error);
-    throw new Error("Failed to fetch JWT secret from Keycloak");
+    console.error("Error fetching public key from Keycloak:", error);
+    throw new Error("Failed to fetch public key from Keycloak");
   }
 }
 
@@ -57,18 +46,6 @@ export const Authorization = async (
   res: Response,
   next: NextFunction
 ) => {
-  const secret = process.env.JSON_WEB_TOKEN_SECRET;
-
-  if (!secret) {
-    try {
-      await getJWTSecret();
-    } catch (error) {
-      return res.status(500).json({
-        error: "JWT secret is not defined and failed to fetch from Keycloak",
-      });
-    }
-  }
-
   if (!req.headers.authorization) {
     return res.status(401).json({ error: "Authorization header is missing" });
   }
@@ -78,28 +55,41 @@ export const Authorization = async (
     return res.status(401).json({ error: "Token is missing" });
   }
 
-  jsonwebtoken.verify(
-    token,
-    process.env.JSON_WEB_TOKEN_SECRET!,
-    { algorithms: ["HS256"] },
-    (err: any, decoded: any) => {
-      if (err) {
-        console.log(err);
-        return res.sendStatus(403);
+  try {
+    const publicKey = await getPublicKey();
+    jsonwebtoken.verify(
+      token,
+      publicKey,
+      { algorithms: ["RS256"] },
+      (err, decoded) => {
+        if (err) {
+          console.error("JWT verification error:", err);
+          return res.sendStatus(403);
+        }
+        req.user = decoded;
+        next();
       }
-      req.user = decoded;
-      next();
-    }
-  );
+    );
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to verify token",
+    });
+  }
 };
 
+export const getTokenUrl = (
+  keycloakServer: string | undefined,
+  realm: string | undefined
+): string | undefined => {
+  return `${keycloakServer}/auth/realms/${realm}/protocol/openid-connect/token`;
+};
+//"token_endpoint": "http://localhost:8080/auth/realms/MyRealm/protocol/openid-connect/token",
 export const getKeycloakToken = async (username: string, password: string) => {
   const clientId = process.env.KEYCLOAK_CLIENT_ID;
   const clientSecret = process.env.KEYCLOAK_CLIENT_SECRET;
   const realm = process.env.KEYCLOAK_REALM;
   const keycloakServer = process.env.KEYCLOAK_SERVER;
-  const tokenUrl = `${keycloakServer}/auth/realms/${realm}/protocol/openid-connect/token`;
-
+  const url = getTokenUrl(keycloakServer, realm);
   const data = qs.stringify({
     client_id: clientId,
     client_secret: clientSecret,
@@ -110,7 +100,7 @@ export const getKeycloakToken = async (username: string, password: string) => {
 
   const config = {
     method: "post",
-    url: tokenUrl,
+    url: url,
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
@@ -127,11 +117,14 @@ export const getKeycloakToken = async (username: string, password: string) => {
 };
 
 // Function to Refresh Token
-export const refreshToken = async (): Promise<string | null> => {
+export const refreshToken = async (
+  refreshToken: string
+): Promise<string | null> => {
   const clientId = process.env.KEYCLOAK_CLIENT_ID;
   const clientSecret = process.env.KEYCLOAK_CLIENT_SECRET;
-  const refreshToken = process.env.KEYCLOAK_REFRESH_TOKEN;
-  const url = process.env.KEYCLOAK_TOKEN_URL;
+  const realm = process.env.KEYCLOAK_REALM;
+  const keycloakServer = process.env.KEYCLOAK_SERVER;
+  const url = getTokenUrl(keycloakServer, realm);
 
   const data = qs.stringify({
     client_id: clientId,

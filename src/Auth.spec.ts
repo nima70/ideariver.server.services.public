@@ -1,24 +1,26 @@
 import "reflect-metadata";
 import express, { Request, Response, NextFunction } from "express";
 import request from "supertest";
-import axios from "axios";
-import qs from "qs";
-import { Authorization, getKeycloakToken, getJWTSecret } from "./Auth"; // Adjust the path as necessary
+import {
+  Authorization,
+  getKeycloakToken,
+  getPublicKey,
+  refreshToken,
+} from "./Auth"; // Adjust the path as necessary
 
-// Utility function to get Keycloak token
-
-describe("Authorization Middleware", () => {
+describe("Authorization Middleware and Token Operations", () => {
   let app: express.Application;
   let token: string;
+  let refreshTokenValue: string;
 
   beforeAll(async () => {
     process.env.KEYCLOAK_CLIENT_ID = "my-client";
     process.env.KEYCLOAK_CLIENT_SECRET = "my-client-secret";
     process.env.KEYCLOAK_REALM = "MyRealm";
     process.env.KEYCLOAK_SERVER = "http://localhost:8080";
-    await getJWTSecret();
-    // Retrieve token from Keycloak
-    token = await getKeycloakToken("test-user", "password");
+    // Retrieve token and refresh token from Keycloak
+    const tokenResponse = await getKeycloakToken("test-user", "password");
+    token = tokenResponse;
 
     // Set up express app and middleware
     app = express();
@@ -30,7 +32,16 @@ describe("Authorization Middleware", () => {
         user: (req as any).user,
       });
     });
-  });
+
+    app.get("/refresh-token", async (req: Request, res: Response) => {
+      try {
+        const newToken = await refreshToken(token);
+        res.json({ newToken });
+      } catch (error) {
+        res.status(500).json({ error: "Failed to refresh token" });
+      }
+    });
+  }, 50000); // Increase timeout to allow for network requests
 
   it("should return 401 if Authorization header is missing", async () => {
     const response = await request(app).get("/protected");
@@ -60,5 +71,11 @@ describe("Authorization Middleware", () => {
     expect(response.status).toBe(200);
     expect(response.body.message).toBe("Protected route accessed");
     expect(response.body.user).toBeDefined();
+  });
+
+  it("should refresh the token successfully", async () => {
+    const response = await request(app).get("/refresh-token");
+    expect(response.status).toBe(200);
+    expect(response.body.newToken).toBeDefined();
   });
 });
