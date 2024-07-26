@@ -1,19 +1,13 @@
-name: Publish to CodeArtifact
+name: Publish to npm
 
 on:
   push:
     branches:
-      - master
+      - master # or any branch you want to trigger the publish
 
 jobs:
-  build:
+  build-and-publish:
     runs-on: ubuntu-latest
-
-    env:
-      CODEARTIFACT_DOMAIN: ${{ secrets.CODEARTIFACT_DOMAIN }}
-      CODEARTIFACT_DOMAIN_OWNER: ${{ secrets.CODEARTIFACT_DOMAIN_OWNER }}
-      CODEARTIFACT_REPOSITORY: ${{ secrets.CODEARTIFACT_REPOSITORY }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
 
     steps:
       - name: Checkout repository
@@ -23,46 +17,24 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "20.14.0"
+          node-version: "16"
+          registry-url: "https://registry.npmjs.org"
         continue-on-error: false
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-        continue-on-error: false
-
-      - name: Get CodeArtifact auth token
-        id: auth
-        run: |
-          CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN --domain-owner $CODEARTIFACT_DOMAIN_OWNER --query authorizationToken --output text)
-          echo "::set-output name=token::$CODEARTIFACT_AUTH_TOKEN"
-        continue-on-error: false
-
-      - name: Create custom .npmrc file
-        run: |
-          echo "registry=https://registry.npmjs.org/" > .npmrc
-          echo "@lib.setup:registry=https://${CODEARTIFACT_DOMAIN}-${CODEARTIFACT_DOMAIN_OWNER}.d.codeartifact.${AWS_REGION}.amazonaws.com/npm/${CODEARTIFACT_REPOSITORY}/" >> .npmrc
-          echo "//${CODEARTIFACT_DOMAIN}-${CODEARTIFACT_DOMAIN_OWNER}.d.codeartifact.${AWS_REGION}.amazonaws.com/npm/${CODEARTIFACT_REPOSITORY}/:always-auth=true" >> .npmrc
-          echo "//${CODEARTIFACT_DOMAIN}-${CODEARTIFACT_DOMAIN_OWNER}.d.codeartifact.${AWS_REGION}.amazonaws.com/npm/${CODEARTIFACT_REPOSITORY}/:_authToken=${{ steps.auth.outputs.token }}" >> .npmrc
-          cat .npmrc # Debugging line to check .npmrc
-        continue-on-error: false
-
-      - name: Install dependencies using custom .npmrc
-        run: npm install --userconfig .npmrc
+      - name: Install dependencies
+        run: npm install
         continue-on-error: false
 
       - name: Run tests
-        run: npm test --userconfig .npmrc
+        run: npm test
         continue-on-error: false
 
       - name: Build the project
-        run: npm run build --userconfig .npmrc
+        run: npm run build
         continue-on-error: false
 
-      - name: Publish to CodeArtifact
-        if: success()
-        run: npm publish --registry https://${CODEARTIFACT_DOMAIN}-${CODEARTIFACT_DOMAIN_OWNER}.d.codeartifact.${AWS_REGION}.amazonaws.com/npm/${CODEARTIFACT_REPOSITORY}/ --userconfig .npmrc
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         continue-on-error: false

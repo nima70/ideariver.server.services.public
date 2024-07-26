@@ -1,11 +1,11 @@
 import "reflect-metadata";
 import { createConnection, getRepository, Repository } from "typeorm";
-import { AbstractCrudController } from "./AbstractCrudController"; // Adjust the path as necessary
+import { AbstractCrudController } from "../AbstractCrudController"; // Adjust the path as necessary
 import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 import express, { Request, Response, NextFunction } from "express";
 import request from "supertest";
-import { ICrudOperations } from "./ICrudOperations";
-import { AbstractValidator } from "./AbstractValidator";
+import { ICrudOperations } from "../ICrudOperations";
+import { AbstractValidator } from "../AbstractValidator";
 // Define a test entity
 @Entity()
 class TestEntity {

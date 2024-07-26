@@ -2,7 +2,7 @@ import "reflect-metadata";
 import express, { Request, Response, NextFunction } from "express";
 import request from "supertest";
 import { Issuer, Client, TokenSet } from "openid-client";
-import { OpenID } from "./Auth"; // Adjust the path as necessary
+import { OpenID } from "../Auth"; // Adjust the path as necessary
 
 interface AuthenticatedRequest extends Request {
   user?: any;

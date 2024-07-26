@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { validate, ValidationError, IsString } from "class-validator";
 import { plainToInstance } from "class-transformer";
-import { AbstractValidator } from "./AbstractValidator"; // Adjust the path as necessary
+import { AbstractValidator } from "../AbstractValidator"; // Adjust the path as necessary
 import express from "express";
 import request from "supertest";
 

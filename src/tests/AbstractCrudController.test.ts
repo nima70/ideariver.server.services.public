@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { createConnection, getRepository, Repository } from "typeorm";
-import { AbstractCrudController } from "./AbstractCrudController"; // Adjust the path as necessary
+import { AbstractCrudController } from "../AbstractCrudController"; // Adjust the path as necessary
 import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 import express from "express";
 import request from "supertest";

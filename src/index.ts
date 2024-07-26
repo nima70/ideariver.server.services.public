@@ -2,3 +2,8 @@ export * from "./IController";
 export * from "./AbstractCrudController";
 export * from "./AbstractValidator";
 export * from "./ICrudOperations";
+export * from "./Auth";
+export * from "./EnvironmentVariableHelpers";
+export * from "./ExpressAppTemplate";
+export * from "./TYPES";
+export * from "./interfaces/IOpenID";
