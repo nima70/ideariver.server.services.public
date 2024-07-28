@@ -49,9 +49,18 @@ export abstract class ExpressAppTemplate extends AppTemplateBase<Container> {
     dotenv.config();
     await this.openID.init();
 
+    // Set trust proxy
+    this.app.set("trust proxy", 1); // '1' means trust the first proxy
     this.port = ensureEnvVarExists("PORT");
     // Security enhancements
-    this.app.use(helmet()); // Helmet helps you secure your Express apps by setting various HTTP headers
+    this.app.use(
+      helmet.contentSecurityPolicy({
+        useDefaults: true,
+        directives: {
+          "frame-src": ["'self'", "http://localhost"],
+        },
+      })
+    );
     this.app.use(express.json()); // Parse incoming JSON requests
     if (ensureEnvVarExists("CORS_EN") === "true") this.app.use(cors());
     // Rate Limiting to prevent brute-force attacks
@@ -100,10 +109,11 @@ export abstract class ExpressAppTemplate extends AppTemplateBase<Container> {
 
         // HTTPS enforcement middleware (use only if HTTPS is configured)
         this.app.use((req, res, next) => {
-          if (req.headers["x-forwarded-proto"] !== "https") {
-            return res.redirect(`https://${req.headers.host}${req.url}`);
+          if (!req.secure && req.get("X-Forwarded-Proto") !== "https") {
+            res.redirect("https://" + req.get("Host") + req.url);
+          } else {
+            next();
           }
-          next();
         });
       } catch (error) {
         this.logger.error("Error reading TLS certificate files:", error);

@@ -23,10 +23,9 @@ export class OpenID implements IOpenID {
   }
 
   public async init() {
+    const url = `${this.serverUrl}/auth/realms/${this.realm}/.well-known/openid-configuration`;
     try {
-      const keycloakIssuer = await Issuer.discover(
-        `${this.serverUrl}/auth/realms/${this.realm}/.well-known/openid-configuration`
-      );
+      const keycloakIssuer = await Issuer.discover(url);
       this.client = new keycloakIssuer.Client({
         client_id: this.clientId!,
         client_secret: this.clientSecret!,
