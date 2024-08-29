@@ -6,7 +6,7 @@ import {
   IPaginationQuery,
   IPaginatedResponse,
   IErrorResponse,
-} from "@ideariver/core"; // Adjust the path as necessary
+} from "ideariver.core"; // Adjust the path as necessary
 
 export abstract class AbstractCrudController<T extends ObjectLiteral>
   implements ICrudController<T>
