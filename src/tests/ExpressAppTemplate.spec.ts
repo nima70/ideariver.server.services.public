@@ -21,7 +21,8 @@ process.env.RATE_LIMIT_MAX = "100"; // 100 requests per window
 process.env.KEYCLOAK_CLIENT_ID = "my-client";
 process.env.KEYCLOAK_CLIENT_SECRET = "my-client-secret";
 process.env.KEYCLOAK_REALM = "MyRealm";
-process.env.KEYCLOAK_SERVER = "http://localhost:8080";
+process.env.KEYCLOAK_SERVER =
+  "http://localhost:8080/realms/MyRealm/.well-known/openid-configuration";
 
 class TestApp extends ExpressAppTemplate {
   public token: TokenSet | undefined = undefined;

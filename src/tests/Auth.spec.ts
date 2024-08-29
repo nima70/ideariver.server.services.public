@@ -17,7 +17,7 @@ describe("Authorization Middleware and Token Operations", () => {
     process.env.KEYCLOAK_CLIENT_ID = "my-client";
     process.env.KEYCLOAK_CLIENT_SECRET = "my-client-secret";
     process.env.KEYCLOAK_REALM = "MyRealm";
-    process.env.KEYCLOAK_SERVER = "http://localhost:8080";
+    process.env.KEYCLOAK_SERVER = "http://localhost:8080/realms/MyRealm/.well-known/openid-configuration";
 
     // Initialize KeycloakService
     keycloakService = new OpenID();

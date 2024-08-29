@@ -1,29 +1,32 @@
 {
-    "id": "MyRealm",
-    "realm": "MyRealm",
-    "enabled": true,
-    "clients": [
-      {
-        "clientId": "my-client",
-        "secret": "my-client-secret",
-        "enabled": true,
-        "redirectUris": ["*"],
-        "publicClient": false,
-        "protocol": "openid-connect",
-        "directAccessGrantsEnabled": true
-      }
-    ],
-    "users": [
-      {
-        "username": "test-user",
-        "enabled": true,
-        "credentials": [
-          {
-            "type": "password",
-            "value": "password"
-          }
-        ]
-      }
-    ]
-  }
-  
+  "id": "MyRealm",
+  "realm": "MyRealm",
+  "enabled": true,
+  "clients": [
+    {
+      "clientId": "my-client",
+      "secret": "my-client-secret",
+      "enabled": true,
+      "redirectUris": ["*"],
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "directAccessGrantsEnabled": true
+    }
+  ],
+  "users": [
+    {
+      "username": "test-user",
+      "enabled": true,
+      "firstName": "John", 
+      "lastName": "Doe", 
+      "email": "test-user@example.com", 
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password"
+        }
+      ]
+    }
+  ]
+}

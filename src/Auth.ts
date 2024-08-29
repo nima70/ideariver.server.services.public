@@ -23,7 +23,8 @@ export class OpenID implements IOpenID {
   }
 
   public async init() {
-    const url = `${this.serverUrl}/auth/realms/${this.realm}/.well-known/openid-configuration`;
+    // const url = `${this.serverUrl}/auth/realms/${this.realm}/.well-known/openid-configuration`;
+    const url = `${this.serverUrl}`;
     try {
       const keycloakIssuer = await Issuer.discover(url);
       this.client = new keycloakIssuer.Client({
@@ -62,13 +63,16 @@ export class OpenID implements IOpenID {
 
   public async getKeycloakToken(
     username: string,
-    password: string
+    password: string,
+    scopes: string[] = ["openid"] // Default scope is "openid"
   ): Promise<TokenSet> {
     try {
+      const scopeString = scopes.join(" "); // Join scopes into a single string
       const tokenSet = await this.client!.grant({
         grant_type: "password",
         username: username,
         password: password,
+        scope: scopeString, // Use the joined scope string here
       });
       return tokenSet;
     } catch (error) {

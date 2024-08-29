@@ -48,8 +48,6 @@ export abstract class ExpressAppTemplate extends AppTemplateBase<Container> {
   async init(): Promise<void> {
     dotenv.config();
     await this.openID.init();
-
-    // Set trust proxy
     this.app.set("trust proxy", 1); // '1' means trust the first proxy
     this.port = ensureEnvVarExists("PORT");
     // Security enhancements
